@@ -9,6 +9,7 @@
   "idf.port": "/dev/cu.usbmodem2101",
   "files.associations": {
     "task.h": "c",
-    "inttypes.h": "c"
+    "inttypes.h": "c",
+    "us_timer.h": "c"
   }
 }

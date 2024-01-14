@@ -12,6 +12,9 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 
+/* 我写的文件 */
+#include "us_timer.h"
+
 /* 日志打印头文件和代码 */
 #include "esp_log.h"
 static const char *TAG = "MAIN APP";
@@ -62,6 +65,8 @@ void app_main(void)
     ESP_LOGI(TAG, "system is start");
 
     xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
+    
+    us_timer_init();
     for (;;)
     {
         /* 死循环 */
