@@ -10,6 +10,7 @@
   "files.associations": {
     "task.h": "c",
     "inttypes.h": "c",
-    "us_timer.h": "c"
+    "us_timer.h": "c",
+    "us_spiffs.h": "c"
   }
 }

@@ -9,12 +9,7 @@
 
 #include "us_timer.h"
 #include "esp_log.h"
-static const char *TAG = "US TIMER";
-
-#define TIMER_DIVIDER 16                                    //  Hardware timer clock divider
-#define TIMER_SCALE (TIMER_BASE_CLK / TIMER_DIVIDER / 1000) // convert counter value to ms seconds
-#define TIMER_INTERVAL0_SEC (10)                            // sample test interval for the first timer
-#define TEST_WITH_RELOAD 1                                  // testing will be done with auto reload
+static const char *TAG = "US_TIMER";
 
 typedef struct
 {
