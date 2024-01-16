@@ -4,7 +4,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "driver/periph_ctrl.h"
 #include "driver/gptimer.h"
 
 #include "us_timer.h"
@@ -80,7 +79,7 @@ void us_timer_init(void)
     gptimer_alarm_config_t alarm_config1 = {
         .reload_count = 0,
         .alarm_count = 1000000, // period = 1s
-        .flags.auto_reload_on_alarm = true,
+        //.flags.auto_reload_on_alarm = true,
     };
     ESP_ERROR_CHECK(gptimer_set_alarm_action(gptimer, &alarm_config1));//设置中断时间为1s一次，切每次重新载入记数值
 

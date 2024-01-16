@@ -27,7 +27,7 @@ static void test_task_example(void * arg)
 
     for(;;)
     {
-        vTaskDelay(1000/portTICK_PERIOD_MS);
+        vTaskDelay(500/portTICK_PERIOD_MS);
         ESP_LOGI(TAG,"test run");
     }
 }
@@ -65,11 +65,11 @@ void app_main(void)
 
     ESP_LOGI(TAG, "system is start");
 
-    //xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
+    xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
     
-    // us_timer_init();
-    // us_spiffs_init();
-    us_nvs_init();
+    us_timer_init();
+    //us_spiffs_init();
+    //us_nvs_init();
     for (;;)
     {
         /* 死循环 */
