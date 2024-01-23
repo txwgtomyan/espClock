@@ -13,7 +13,9 @@
     "us_timer.h": "c",
     "us_spiffs.h": "c",
     "esp_system.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "us_rgb_lcd.h": "c",
+    "freertos.h": "c"
   },
   "idf.portWin": "COM17"
 }

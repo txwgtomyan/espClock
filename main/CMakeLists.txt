@@ -4,5 +4,6 @@ idf_component_register(SRCS
                         "./src/us_spiffs.c"
                         "./src/us_nvs.c"
                         "./src/us_gpio.c"
+                        "./src/us_rgb_lcd.c"
                     INCLUDE_DIRS "."
                                 "./Inc")

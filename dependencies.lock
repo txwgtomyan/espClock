@@ -1,0 +1,15 @@
+dependencies:
+  idf:
+    component_hash: null
+    source:
+      type: idf
+    version: 5.1.2
+  lvgl__lvgl:
+    component_hash: null
+    source:
+      path: /Users/yangyi/project/myclock/components/lvgl__lvgl
+      type: local
+    version: 8.3.11
+manifest_hash: 7b986a4d92563c3e54f6b508c039cde93e1116b1008e935d5010d16b62ee705d
+target: esp32s3
+version: 1.0.0

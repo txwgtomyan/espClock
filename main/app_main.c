@@ -16,6 +16,7 @@
 #include "us_timer.h"
 #include "us_spiffs.h"
 #include "us_nvs.h"
+#include "us_rgb_lcd.h"
 /* 日志打印头文件和代码 */
 #include "esp_log.h"
 static const char *TAG = "MAIN APP";
@@ -70,6 +71,7 @@ void app_main(void)
     // us_timer_init();
     //us_spiffs_init();
     //us_nvs_init();
+    us_rgb_lcd_init();
     for (;;)
     {
         /* 死循环 */
