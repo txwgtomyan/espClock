@@ -107,6 +107,6 @@ void us_rgb_lcd_init(void)
             .flags.pclk_active_neg = true,
         },
         .flags.fb_in_psram = true, // 在 PSRAM 中分配帧缓冲区
-    };
-    //ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(&panel_config, &panel_handle));
+    };  
+    ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(&panel_config, &panel_handle));
 }
