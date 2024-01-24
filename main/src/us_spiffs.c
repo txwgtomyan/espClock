@@ -137,8 +137,7 @@ void us_spiffs_init(void)
             ESP_LOGI(TAG, "SPIFFS_check() successful");
         }
     }
-
-
+    
     us_spiffs_test();
     // All done, unmount partition and disable SPIFFS
     esp_vfs_spiffs_unregister(conf.partition_label);

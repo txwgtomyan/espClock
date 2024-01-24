@@ -17,5 +17,5 @@
     "us_rgb_lcd.h": "c",
     "freertos.h": "c"
   },
-  "idf.portWin": "COM17"
+  "idf.portWin": "COM92"
 }
