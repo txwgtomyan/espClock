@@ -15,7 +15,8 @@
     "esp_system.h": "c",
     "stdio.h": "c",
     "us_rgb_lcd.h": "c",
-    "freertos.h": "c"
+    "freertos.h": "c",
+    "esp_lcd_touch.h": "c"
   },
   "idf.portWin": "COM92"
 }

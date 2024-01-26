@@ -6,5 +6,6 @@ idf_component_register(SRCS
                         "./src/us_gpio.c"
                         "./src/us_rgb_lcd.c"
                         "./src/us_ui.c"
+                        "./src/us_lcd_touch.c"
                     INCLUDE_DIRS "."
                                 "./Inc")
