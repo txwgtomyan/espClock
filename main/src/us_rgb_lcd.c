@@ -10,12 +10,15 @@
 #include "esp_err.h"
 #include "lvgl.h"
 
+#include "driver/i2c.h"
+#include "esp_lcd_touch_gt911.h"
+
 #include "us_rgb_lcd.h"
 #include "esp_log.h"
 static const char *TAG = "US RGB";
 
 /* 屏幕引脚定义 */
-#define EXAMPLE_LCD_PIXEL_CLOCK_HZ (30 * 1000 * 1000)
+#define EXAMPLE_LCD_PIXEL_CLOCK_HZ (18 * 1000 * 1000)
 #define EXAMPLE_LCD_BK_LIGHT_ON_LEVEL 1
 #define EXAMPLE_LCD_BK_LIGHT_OFF_LEVEL !EXAMPLE_LCD_BK_LIGHT_ON_LEVEL
 #define EXAMPLE_PIN_NUM_BK_LIGHT -1//原理图没有背光
@@ -41,11 +44,23 @@ static const char *TAG = "US RGB";
 #define EXAMPLE_PIN_NUM_DATA15 40 // R7
 #define EXAMPLE_PIN_NUM_DISP_EN -1
 
+/* 触摸的引脚定义 */
+#define I2C_MASTER_SCL_IO           9       /*!< GPIO number used for I2C master clock */
+#define I2C_MASTER_SDA_IO           8       /*!< GPIO number used for I2C master data  */
+#define I2C_MASTER_NUM              0
+#define I2C_MASTER_FREQ_HZ          400000                     /*!< I2C master clock frequency */
+#define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_TIMEOUT_MS       1000
+
 /* 屏幕参数 */
 #define EXAMPLE_LCD_H_RES              800
 #define EXAMPLE_LCD_V_RES              480
 
+/* LVGL配置 */
+#define EXAMPLE_LCD_NUM_FB             2
 #define EXAMPLE_LVGL_TICK_PERIOD_MS    2
+
 static bool example_on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *event_data, void *user_data)
 {
     BaseType_t high_task_awoken = pdFALSE;
@@ -76,6 +91,26 @@ static void example_lvgl_flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_
     lv_disp_flush_ready(drv);//告诉LVGL画完了
 }
 
+static void example_lvgl_touch_cb(lv_indev_drv_t * drv, lv_indev_data_t * data)
+{
+    uint16_t touchpad_x[1] = {0};
+    uint16_t touchpad_y[1] = {0};
+    uint8_t touchpad_cnt = 0;
+    /* Read touch controller data */
+    esp_lcd_touch_read_data(drv->user_data);
+
+    /* Get coordinates */
+    bool touchpad_pressed = esp_lcd_touch_get_coordinates(drv->user_data, touchpad_x, touchpad_y, NULL, &touchpad_cnt, 1);
+
+    if (touchpad_pressed && touchpad_cnt > 0) {
+        data->point.x = touchpad_x[0];
+        data->point.y = touchpad_y[0];
+        data->state = LV_INDEV_STATE_PR;
+        ESP_LOGI(TAG, "X=%u Y=%u", data->point.x, data->point.y);
+    } else {
+        data->state = LV_INDEV_STATE_REL;
+    }
+}
 /**
  * @brief LVGL定时器的回调函数
  * 
@@ -98,12 +133,14 @@ void us_rgb_lcd_init(void)
     static lv_disp_draw_buf_t disp_buf; // 包含称为绘制缓冲区的内部图形缓冲区。
     static lv_disp_drv_t disp_drv;      // 显示驱动的描述符,表示一个屏幕
 
+/* ----------------LVGL 显示初始化---------------- */
+    /* ESP32 RGB接口配置 */
     ESP_LOGI(TAG, "Install RGB LCD panel driver");
     esp_lcd_panel_handle_t panel_handle = NULL;
     esp_lcd_rgb_panel_config_t panel_config = {
         .data_width = 16, // RGB565 in parallel mode, thus 16bit in width
         .psram_trans_align = 64,
-        .num_fbs = 1,//缓冲区的数量
+        .num_fbs = EXAMPLE_LCD_NUM_FB,//缓冲区的数量
         .clk_src = LCD_CLK_SRC_DEFAULT,
         .disp_gpio_num = EXAMPLE_PIN_NUM_DISP_EN,
         .pclk_gpio_num = EXAMPLE_PIN_NUM_PCLK,
@@ -133,12 +170,12 @@ void us_rgb_lcd_init(void)
             .h_res = EXAMPLE_LCD_H_RES,
             .v_res = EXAMPLE_LCD_V_RES,
             // The following parameters should refer to LCD spec
-            .hsync_back_porch = 40,
-            .hsync_front_porch = 20,
-            .hsync_pulse_width = 1,
-            .vsync_back_porch = 8,
+            .hsync_back_porch = 30,
+            .hsync_front_porch = 210,
+            .hsync_pulse_width = 30,
+            .vsync_back_porch = 4,
             .vsync_front_porch = 4,
-            .vsync_pulse_width = 1,
+            .vsync_pulse_width = 4,
             .flags.pclk_active_neg = true,
         },
         .flags.fb_in_psram = true, // 在 PSRAM 中分配帧缓冲区
@@ -154,7 +191,7 @@ void us_rgb_lcd_init(void)
 
     ESP_LOGI(TAG, "Initialize RGB LCD panel");
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));//完成ESP32 RGB接口初始化
 
     /* 初始化LVGL */
     ESP_LOGI(TAG, "Initialize LVGL library");
@@ -163,15 +200,12 @@ void us_rgb_lcd_init(void)
     /* 为lvgl缓存申请空间 */
     void *buf1 = NULL;
     void *buf2 = NULL;
-    ESP_LOGI(TAG, "Allocate separate LVGL draw buffers from PSRAM");
-    buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 100 * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
-    assert(buf1);
-    buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 100 * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
-    assert(buf2);
+    ESP_LOGI(TAG, "Use frame buffers as LVGL draw buffers");
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_get_frame_buffer(panel_handle, 2, &buf1, &buf2));
+    // initialize LVGL draw buffers
+    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES);
 
-    /* 初始化 LVGL 绘制缓冲区 */
-    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * 100);
-
+    /* LVGL显示接口初始化 */
     ESP_LOGI(TAG, "Register display driver to LVGL");
     lv_disp_drv_init(&disp_drv);//基本初始化
     disp_drv.hor_res = EXAMPLE_LCD_H_RES;
@@ -179,9 +213,69 @@ void us_rgb_lcd_init(void)
     disp_drv.flush_cb = example_lvgl_flush_cb;
     disp_drv.draw_buf = &disp_buf;
     disp_drv.user_data = panel_handle;
-
+    disp_drv.full_refresh = true;//full_refresh模式可以保持两个帧缓冲区之间的同步
     lv_disp_t *disp = lv_disp_drv_register(&disp_drv);//注册驱动
 
+/* ----------------LVGL 触摸初始化---------------- */
+    /* 创建一个IIC总线 */
+    int i2c_master_port = I2C_MASTER_NUM;
+
+    i2c_config_t conf = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = I2C_MASTER_SDA_IO,
+        .scl_io_num = I2C_MASTER_SCL_IO,
+        .sda_pullup_en = GPIO_PULLUP_ENABLE,
+        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        .master.clk_speed = I2C_MASTER_FREQ_HZ,
+    };
+
+    i2c_param_config(i2c_master_port, &conf);
+
+    ESP_ERROR_CHECK(i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
+    ESP_LOGI(TAG, "Initialize I2C success");
+    
+    /* 不知道写这些干嘛 */
+    // uint8_t write_buf = 0x01;
+    // ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x24, &write_buf, 1, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+    // ESP_LOGI(TAG,"0x48 0x01 ret is %d",ret);
+    // write_buf = 0x0E;
+    // ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x38, &write_buf, 1, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+    // ESP_LOGI(TAG,"0x70 0x00 ret is %d",ret);
+
+
+    esp_lcd_touch_handle_t tp = NULL;
+    esp_lcd_panel_io_handle_t tp_io_handle = NULL;
+    esp_lcd_panel_io_i2c_config_t io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_MASTER_NUM, &io_config, &tp_io_handle));
+
+    esp_lcd_touch_config_t tp_cfg = {
+        .x_max = EXAMPLE_LCD_H_RES,
+        .y_max = EXAMPLE_LCD_V_RES,
+        .rst_gpio_num = -1,
+        .int_gpio_num = -1,
+        .levels = {
+            .reset = 0,
+            .interrupt = 0,
+        },
+        .flags = {
+            .swap_xy = 0,
+            .mirror_x = 0,
+            .mirror_y = 0,
+        },
+    };    
+    ESP_LOGI(TAG, "Initialize touch controller GT911");
+    ESP_ERROR_CHECK(esp_lcd_touch_new_i2c_gt911(tp_io_handle, &tp_cfg, &tp));
+
+    /* LVGL触摸接口部分 */
+    static lv_indev_drv_t indev_drv;    
+    lv_indev_drv_init(&indev_drv);
+    indev_drv.type = LV_INDEV_TYPE_POINTER;
+    indev_drv.disp = disp;//显示接口（一个LVGL可以有多个屏幕）
+    indev_drv.read_cb = example_lvgl_touch_cb;
+    indev_drv.user_data = tp;
+
+    lv_indev_drv_register(&indev_drv);
+/* ----------------LVGL 心跳函数初始化---------------- */
     /* 给LVGL的心跳函数（lv_tick_inc）创建一个定时器 */
     ESP_LOGI(TAG, "Install LVGL tick timer");
     const esp_timer_create_args_t lvgl_tick_timer_args = {
