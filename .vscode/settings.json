@@ -18,7 +18,9 @@
     "freertos.h": "c",
     "esp_lcd_touch.h": "c",
     "esp_lcd_touch_gt911.h": "c",
-    "us_nvs.h": "c"
+    "us_nvs.h": "c",
+    "bitset": "c",
+    "algorithm": "c"
   },
   "idf.portWin": "COM92"
 }

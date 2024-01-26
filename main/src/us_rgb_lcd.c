@@ -58,9 +58,15 @@ static const char *TAG = "US RGB";
 #define EXAMPLE_LCD_V_RES              480
 
 /* LVGL配置 */
+#define CONFIG_EXAMPLE_DOUBLE_FB 1
+#if CONFIG_EXAMPLE_DOUBLE_FB
 #define EXAMPLE_LCD_NUM_FB             2
-#define EXAMPLE_LVGL_TICK_PERIOD_MS    2
+#else
+#define EXAMPLE_LCD_NUM_FB             1
+#endif // CONFIG_EXAMPLE_DOUBLE_FB
 
+#define EXAMPLE_LVGL_TICK_PERIOD_MS    2
+#define LVGL_CACHE_ROWS 120
 static bool example_on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *event_data, void *user_data)
 {
     BaseType_t high_task_awoken = pdFALSE;
@@ -170,12 +176,12 @@ void us_rgb_lcd_init(void)
             .h_res = EXAMPLE_LCD_H_RES,
             .v_res = EXAMPLE_LCD_V_RES,
             // The following parameters should refer to LCD spec
-            .hsync_back_porch = 30,
-            .hsync_front_porch = 210,
-            .hsync_pulse_width = 30,
-            .vsync_back_porch = 4,
+            .hsync_back_porch = 40,
+            .hsync_front_porch = 20,
+            .hsync_pulse_width = 1,
+            .vsync_back_porch = 8,
             .vsync_front_porch = 4,
-            .vsync_pulse_width = 4,
+            .vsync_pulse_width = 1,
             .flags.pclk_active_neg = true,
         },
         .flags.fb_in_psram = true, // 在 PSRAM 中分配帧缓冲区
@@ -200,11 +206,18 @@ void us_rgb_lcd_init(void)
     /* 为lvgl缓存申请空间 */
     void *buf1 = NULL;
     void *buf2 = NULL;
+    #if CONFIG_EXAMPLE_DOUBLE_FB
     ESP_LOGI(TAG, "Use frame buffers as LVGL draw buffers");
     ESP_ERROR_CHECK(esp_lcd_rgb_panel_get_frame_buffer(panel_handle, 2, &buf1, &buf2));
-    // initialize LVGL draw buffers
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES);
-
+    #else
+    ESP_LOGI(TAG, "Allocate separate LVGL draw buffers from PSRAM");
+    buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * LVGL_CACHE_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+    assert(buf1);
+    buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * LVGL_CACHE_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+    assert(buf2);
+    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * LVGL_CACHE_ROWS);
+    #endif 
     /* LVGL显示接口初始化 */
     ESP_LOGI(TAG, "Register display driver to LVGL");
     lv_disp_drv_init(&disp_drv);//基本初始化
@@ -213,7 +226,9 @@ void us_rgb_lcd_init(void)
     disp_drv.flush_cb = example_lvgl_flush_cb;
     disp_drv.draw_buf = &disp_buf;
     disp_drv.user_data = panel_handle;
+#if CONFIG_EXAMPLE_DOUBLE_FB
     disp_drv.full_refresh = true;//full_refresh模式可以保持两个帧缓冲区之间的同步
+#endif
     lv_disp_t *disp = lv_disp_drv_register(&disp_drv);//注册驱动
 
 /* ----------------LVGL 触摸初始化---------------- */

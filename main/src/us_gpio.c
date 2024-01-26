@@ -9,7 +9,7 @@
 
 #include "us_gpio.h"
 #include "esp_log.h"
-static const char *TAG = "US_GPIO";
+//static const char *TAG = "US_GPIO";
 
 #define GPIO_OUTPUT_IO_0    5
 #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0))
