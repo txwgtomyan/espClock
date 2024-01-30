@@ -22,7 +22,9 @@
 #include "esp_log.h"
 static const char *TAG = "MAIN APP";
 
-
+/* ---------------------声明其他函数--------------------- */
+extern void us_wifi_init(void);
+/* ----------------------------------------------------- */
 static void test_task_example(void * arg)
 {
     ESP_LOGI(TAG,"example task start");
@@ -72,8 +74,9 @@ void app_main(void)
     // us_timer_init();
     //us_spiffs_init();
     //us_nvs_init();
-    us_rgb_lcd_init();
+    //us_rgb_lcd_init();
     //us_ap_start();
+    us_wifi_init();
     for (;;)
     {
         /* 死循环 */

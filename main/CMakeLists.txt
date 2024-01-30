@@ -6,6 +6,7 @@ idf_component_register(SRCS
                         "./src/us_gpio.c"
                         "./src/us_rgb_lcd.c"
                         "./net/us_ap.c"
+                        "./net/us_wifi.c"
                         "./ui/ui.c"
                         "./ui/images/ui_img_pic1_png.c"
                         "./ui/images/ui_img_pic2_png.c"

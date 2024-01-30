@@ -8,7 +8,7 @@
 
 #include "us_timer.h"
 #include "esp_log.h"
-static const char *TAG = "US_TIMER";
+static const char *TAG = "US TIMER";
 
 typedef struct
 {

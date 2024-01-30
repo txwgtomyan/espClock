@@ -20,7 +20,9 @@
     "esp_lcd_touch_gt911.h": "c",
     "us_nvs.h": "c",
     "bitset": "c",
-    "algorithm": "c"
+    "algorithm": "c",
+    "esp_types.h": "c",
+    "compare": "c"
   },
   "idf.portWin": "COM92"
 }
