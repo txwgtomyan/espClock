@@ -72,8 +72,8 @@ void app_main(void)
     // us_timer_init();
     //us_spiffs_init();
     //us_nvs_init();
-    //us_rgb_lcd_init();
-    us_ap_start();
+    us_rgb_lcd_init();
+    //us_ap_start();
     for (;;)
     {
         /* 死循环 */
