@@ -23,7 +23,9 @@
     "algorithm": "c",
     "esp_types.h": "c",
     "compare": "c",
-    "esp_log.h": "c"
+    "esp_log.h": "c",
+    "cerrno": "c",
+    "*.tcc": "c"
   },
   "idf.portWin": "COM92"
 }

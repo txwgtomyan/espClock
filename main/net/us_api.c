@@ -37,31 +37,36 @@ static void http_get_task(void *pvParameters)
     };
 
     struct addrinfo *res; // 存放地址信息
-    //struct in_addr *addr;
+    struct in_addr *addr;
     int s, r;
-    char recv_buf[64];//缓存
-
+    char recv_buf[64]; // 缓存
     while (1)
     {
-        int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res); // 获取地址信息
-
+        /* 域名解析 */
+        int err = getaddrinfo(WEB_SERVER, WEB_PORT, &hints, &res);
         if (err != 0 || res == NULL)
-            {
+        {
             ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p", err, res);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
 
-        s = socket(res->ai_family, res->ai_socktype, 0); // 套接字API 错误
+        /* 打印IP地址 */
+        addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+        ESP_LOGI(TAG, "DNS lookup succeeded. IP=%s\r\n", inet_ntoa(*addr));
+
+        /* 新建socket */
+        s = socket(res->ai_family, res->ai_socktype, 0);
         if (s < 0)
         {
             ESP_LOGE(TAG, "... Failed to allocate socket.");
             freeaddrinfo(res); // 释放地址信息
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
             continue;
         }
         ESP_LOGI(TAG, "... allocated socket");
 
+        /* 连接ip */
         if (connect(s, res->ai_addr, res->ai_addrlen) != 0)
         {
             ESP_LOGE(TAG, "... socket connect failed errno=%d", errno);
@@ -72,8 +77,9 @@ static void http_get_task(void *pvParameters)
         }
         ESP_LOGI(TAG, "... connected"); // 连接成功
 
-        freeaddrinfo(res); // 释放地址信息
+        freeaddrinfo(res); // 释放连接信息
 
+        /* 发送http包(发送请求) */
         if (write(s, REQUEST, strlen(REQUEST)) < 0)
         {
             ESP_LOGE(TAG, "... socket send failed");
@@ -83,6 +89,7 @@ static void http_get_task(void *pvParameters)
         }
         ESP_LOGI(TAG, "... socket send success");
 
+        /* 设置套接字 */
         struct timeval receiving_timeout;
         receiving_timeout.tv_sec = 5;
         receiving_timeout.tv_usec = 0;
@@ -106,9 +113,17 @@ static void http_get_task(void *pvParameters)
             }
         } while (r > 0);
         printf("\r\n");
-        
+
         ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
-        vTaskDelay(10000);
+        close(s); // 释放socket
+
+        ESP_LOGI(TAG, "%d", (int)uxTaskGetStackHighWaterMark(NULL));
+        for (int countdown = 10; countdown >= 0; countdown--)
+        {
+            ESP_LOGI(TAG, "%d... ", countdown);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+        ESP_LOGI(TAG, "Starting again!");
     }
 }
 

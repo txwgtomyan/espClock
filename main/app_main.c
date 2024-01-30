@@ -69,13 +69,13 @@ void app_main(void)
 
     ESP_LOGI(TAG, "system is start");
 
-    xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
+    // xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
     
     // us_timer_init();
-    //us_spiffs_init();
-    //us_nvs_init();
-    //us_rgb_lcd_init();
-    //us_ap_start();
+    // us_spiffs_init();
+    // us_nvs_init();
+    // us_rgb_lcd_init();
+    // us_ap_start();
     us_api_init();
     for (;;)
     {
