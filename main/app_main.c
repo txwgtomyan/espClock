@@ -23,7 +23,7 @@
 static const char *TAG = "MAIN APP";
 
 /* ---------------------声明其他函数--------------------- */
-extern void us_wifi_init(void);
+extern void us_api_init(void);
 /* ----------------------------------------------------- */
 static void test_task_example(void * arg)
 {
@@ -31,7 +31,7 @@ static void test_task_example(void * arg)
 
     for(;;)
     {
-        vTaskDelay(500/portTICK_PERIOD_MS);
+        vTaskDelay(1000);
         ESP_LOGI(TAG,"test run");
     }
 }
@@ -69,14 +69,14 @@ void app_main(void)
 
     ESP_LOGI(TAG, "system is start");
 
-    // xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
+    xTaskCreatePinnedToCore(test_task_example,"test_task_example",2048,NULL,10,NULL,0);
     
     // us_timer_init();
     //us_spiffs_init();
     //us_nvs_init();
     //us_rgb_lcd_init();
     //us_ap_start();
-    us_wifi_init();
+    us_api_init();
     for (;;)
     {
         /* 死循环 */

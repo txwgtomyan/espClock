@@ -22,7 +22,8 @@
     "bitset": "c",
     "algorithm": "c",
     "esp_types.h": "c",
-    "compare": "c"
+    "compare": "c",
+    "esp_log.h": "c"
   },
   "idf.portWin": "COM92"
 }
